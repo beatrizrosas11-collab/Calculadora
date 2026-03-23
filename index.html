@@ -205,6 +205,10 @@
       margin-bottom: 20px;
     }
 
+    .field-full {
+      grid-column: span 2;
+    }
+
     .field {
       position: relative;
     }
@@ -647,16 +651,11 @@
           <label><span class="field-icon">🍽️</span>Saída Intervalo</label>
           <input type="time" id="saida_intervalo" />
         </div>
-        <div class="field">
+        <div class="field field-full">
           <label><span class="field-icon">🔄</span>Volta Intervalo</label>
           <input type="time" id="volta_intervalo" />
         </div>
-        <div class="field">
-          <label style="color:var(--text3); font-style:italic;">↳ preenche automaticamente</label>
-          <div style="height:44px;display:flex;align-items:center;padding-left:4px;">
-            <span style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--text3);">após calcular</span>
-          </div>
-        </div>
+
       </div>
 
       <button class="btn-calc" onclick="calcular()">→ Calcular horários de saída</button>
