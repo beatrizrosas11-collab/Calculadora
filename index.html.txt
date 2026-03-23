@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Controle de Jornada</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #16161f;
+      --border: #1e1e2e;
+      --border2: #252535;
+      --text: #e8e8f0;
+      --text2: #8888a8;
+      --text3: #555570;
+      --cyan: #00d4ff;
+      --violet: #7c6af7;
+      --green: #00e5a0;
+      --amber: #ffb340;
+      --red: #ff4d6d;
+      --cyan-glow: rgba(0,212,255,0.15);
+      --violet-glow: rgba(124,106,247,0.15);
+      --green-glow: rgba(0,229,160,0.15);
+      --amber-glow: rgba(255,179,64,0.15);
+      --indicator-filter: invert(0.5);
+    }
+
+    body.light {
+      --bg: #f0f2f8;
+      --surface: #ffffff;
+      --surface2: #f4f6fb;
+      --border: #dde1ef;
+      --border2: #c8cedd;
+      --text: #0f0f1a;
+      --text2: #555575;
+      --text3: #9090b0;
+      --cyan: #0096bb;
+      --violet: #5b4fd4;
+      --green: #00a871;
+      --amber: #cc8800;
+      --red: #e02040;
+      --indicator-filter: none;
+    }
+
+    body.light::before {
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 0%, rgba(124,106,247,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 80% 100%, rgba(0,212,255,0.03) 0%, transparent 60%);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 0%, rgba(124,106,247,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 80% 100%, rgba(0,212,255,0.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 440px;
+      position: relative;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 32px;
+      position: relative;
+    }
+
+    .header-line {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 6px;
+    }
+
+    .clock-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .clock-icon::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--violet-glow), transparent);
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--text);
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .subtitle {
+      color: var(--text3);
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding-left: 58px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .card-inner {
+      padding: 28px;
+    }
+
+    /* Jornada Toggle */
+    .toggle-section {
+      margin-bottom: 28px;
+    }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text3);
+      margin-bottom: 10px;
+    }
+
+    .jornada-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .toggle-btn {
+      padding: 13px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text3);
+      font-family: 'DM Mono', monospace;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .toggle-btn:hover {
+      border-color: var(--border2);
+      color: var(--text2);
+    }
+
+    .toggle-btn.active-cyan {
+      border-color: var(--cyan);
+      background: rgba(0,212,255,0.06);
+      color: var(--cyan);
+      box-shadow: 0 0 20px rgba(0,212,255,0.1), inset 0 0 20px rgba(0,212,255,0.04);
+    }
+
+    .toggle-btn.active-violet {
+      border-color: var(--violet);
+      background: rgba(124,106,247,0.06);
+      color: var(--violet);
+      box-shadow: 0 0 20px rgba(124,106,247,0.1), inset 0 0 20px rgba(124,106,247,0.04);
+    }
+
+    /* Time fields */
+    .fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .field {
+      position: relative;
+    }
+
+    .field label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.63rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text3);
+      display: block;
+      margin-bottom: 7px;
+    }
+
+    .time-input-wrap {
+      position: relative;
+    }
+
+    input[type="time"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 1.15rem;
+      font-weight: 500;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+    }
+
+    input[type="time"]:focus {
+      border-color: var(--violet);
+      box-shadow: 0 0 0 3px rgba(124,106,247,0.1);
+    }
+
+    input[type="time"]:not(:placeholder-shown):valid {
+      border-color: var(--border2);
+    }
+
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.5);
+      opacity: 0.5;
+      cursor: pointer;
+    }
+
+    .field-icon {
+      font-size: 11px;
+      margin-right: 4px;
+      opacity: 0.7;
+    }
+
+    /* Buttons */
+    .btn-calc {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--violet) 0%, #5b4fd4 100%);
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .btn-calc::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.4s;
+    }
+
+    .btn-calc:hover::before { left: 100%; }
+    .btn-calc:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn-calc:active { transform: translateY(0); }
+
+    .btn-clear {
+      width: 100%;
+      padding: 11px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text3);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-clear:hover { color: var(--text2); border-color: var(--border2); }
+
+    /* Error */
+    .error-msg {
+      background: rgba(255,77,109,0.08);
+      border: 1px solid rgba(255,77,109,0.3);
+      color: #ff8099;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      margin-top: 12px;
+      display: none;
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* Divider */
+    .divider {
+      border: none;
+      height: 1px;
+      background: var(--border);
+      margin: 0;
+    }
+
+    /* Results section */
+    .results-section {
+      display: none;
+      padding: 24px 28px;
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .results-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text3);
+    }
+
+    .interval-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--text3);
+      transition: all 0.3s;
+    }
+
+    .interval-pill span { color: var(--text2); }
+
+    .interval-pill.curto {
+      background: rgba(255,179,64,0.08);
+      border-color: rgba(255,179,64,0.4);
+      color: rgba(255,179,64,0.8);
+    }
+
+    .interval-pill.curto span {
+      color: var(--amber);
+      font-weight: 500;
+    }
+
+    .aviso-intervalo {
+      margin-top: 10px;
+      border-radius: 12px;
+      padding: 13px 16px;
+      background: rgba(255,179,64,0.07);
+      border: 1.5px solid rgba(255,179,64,0.35);
+      animation: slideUp 0.3s ease;
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .aviso-intervalo-icon { font-size: 20px; flex-shrink: 0; }
+
+    .aviso-intervalo-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--amber);
+      letter-spacing: 0.02em;
+      margin-bottom: 2px;
+    }
+
+    .aviso-intervalo-detail {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.67rem;
+      color: rgba(255,179,64,0.55);
+    }
+
+    /* Result rows */
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .result-card {
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 14px;
+      border: 1.5px solid var(--border);
+      transition: border-color 0.3s;
+    }
+
+    .result-card.cyan { border-color: rgba(0,212,255,0.3); background: rgba(0,212,255,0.03); }
+    .result-card.violet { border-color: rgba(124,106,247,0.3); background: rgba(124,106,247,0.03); }
+    .result-card.green { border-color: rgba(0,229,160,0.3); background: rgba(0,229,160,0.03); }
+    .result-card.amber { border-color: rgba(255,179,64,0.3); background: rgba(255,179,64,0.03); }
+
+    .result-card-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 8px;
+    }
+
+    .result-card.cyan .result-card-label { color: rgba(0,212,255,0.6); }
+    .result-card.violet .result-card-label { color: rgba(124,106,247,0.6); }
+    .result-card.green .result-card-label { color: rgba(0,229,160,0.6); }
+    .result-card.amber .result-card-label { color: rgba(255,179,64,0.6); }
+
+    .result-card-time {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.6rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+
+    .result-card.cyan .result-card-time { color: var(--cyan); }
+    .result-card.violet .result-card-time { color: var(--violet); }
+    .result-card.green .result-card-time { color: var(--green); }
+    .result-card.amber .result-card-time { color: var(--amber); }
+
+    .result-card-sub {
+      font-size: 0.7rem;
+      color: var(--text3);
+      margin-top: 3px;
+    }
+
+    /* Extras */
+    .extras-divider {
+      border: none;
+      height: 1px;
+      background: var(--border);
+      margin: 0 0 20px;
+    }
+
+    .extras-label-row {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text3);
+      margin-bottom: 14px;
+    }
+
+    .saida-field {
+      margin-bottom: 14px;
+    }
+
+    .extras-box {
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      display: none;
+      animation: slideUp 0.3s ease;
+    }
+
+    .extras-box.normal {
+      background: rgba(0,229,160,0.05);
+      border: 1.5px solid rgba(0,229,160,0.25);
+    }
+
+    .extras-box.has-extras {
+      background: rgba(255,179,64,0.05);
+      border: 1.5px solid rgba(255,179,64,0.25);
+    }
+
+    .extras-box.negativo {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+    }
+
+    .extras-box-icon { font-size: 24px; margin-bottom: 6px; }
+    .extras-box-lbl {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .extras-box.normal .extras-box-lbl { color: rgba(0,229,160,0.7); }
+    .extras-box.has-extras .extras-box-lbl { color: rgba(255,179,64,0.7); }
+    .extras-box.negativo .extras-box-lbl { color: var(--text3); }
+
+    .extras-box-val {
+      font-family: 'DM Mono', monospace;
+      font-size: 2rem;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+    }
+
+    .extras-box.normal .extras-box-val { color: var(--green); }
+    .extras-box.has-extras .extras-box-val { color: var(--amber); }
+    .extras-box.negativo .extras-box-val { color: var(--text3); }
+
+    .extras-box-note {
+      font-size: 0.72rem;
+      margin-top: 6px;
+    }
+
+    .extras-box.normal .extras-box-note { color: rgba(0,229,160,0.5); }
+    .extras-box.has-extras .extras-box-note { color: rgba(255,179,64,0.5); }
+    .extras-box.negativo .extras-box-note { color: var(--text3); }
+
+    /* Alert */
+    .alerta {
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      display: none;
+      margin-top: 10px;
+      background: rgba(255,77,109,0.07);
+      border: 2px solid rgba(255,77,109,0.4);
+      animation: pulse 2s ease-in-out infinite, slideUp 0.3s ease;
+    }
+
+    .alerta-icon { font-size: 26px; margin-bottom: 6px; }
+    .alerta-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #ff8099;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .alerta-detail {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: rgba(255,128,153,0.65);
+      margin-top: 5px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,109,0.2); }
+      50% { box-shadow: 0 0 20px 4px rgba(255,77,109,0.15); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Footer */
+    .footer {
+      text-align: right;
+      padding: 14px 28px 18px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text3);
+      opacity: 0.6;
+      letter-spacing: 0.05em;
+    }
+
+    /* Theme toggle */
+    .theme-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text2);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .theme-btn:hover {
+      border-color: var(--violet);
+      transform: scale(1.1);
+    }
+
+    /* Fix indicator in light mode */
+    body.light input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: var(--indicator-filter);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Alternar tema">☀️</button>
+    <div class="header-line">
+      <div class="clock-icon">🕰️</div>
+      <h1>Controle de Jornada</h1>
+    </div>
+    <div class="subtitle">Calculadora de horários de trabalho</div>
+  </div>
+
+  <div class="card">
+    <div class="card-inner">
+
+      <!-- Jornada toggle -->
+      <div class="toggle-section">
+        <div class="section-label">⚡ Minha jornada contratada</div>
+        <div class="jornada-toggle">
+          <button class="toggle-btn active-cyan" id="opt-750" onclick="selecionarJornada('750')">7h30</button>
+          <button class="toggle-btn" id="opt-8" onclick="selecionarJornada('8')">8h00</button>
+        </div>
+      </div>
+
+      <!-- Time fields -->
+      <div class="fields-grid">
+        <div class="field">
+          <label><span class="field-icon">🚪</span>Entrada</label>
+          <input type="time" id="entrada" />
+        </div>
+        <div class="field">
+          <label><span class="field-icon">🍽️</span>Saída Intervalo</label>
+          <input type="time" id="saida_intervalo" />
+        </div>
+        <div class="field">
+          <label><span class="field-icon">🔄</span>Volta Intervalo</label>
+          <input type="time" id="volta_intervalo" />
+        </div>
+        <div class="field">
+          <label style="color:var(--text3); font-style:italic;">↳ preenche automaticamente</label>
+          <div style="height:44px;display:flex;align-items:center;padding-left:4px;">
+            <span style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--text3);">após calcular</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-calc" onclick="calcular()">→ Calcular horários de saída</button>
+      <button class="btn-clear" onclick="limpar()">Limpar campos</button>
+
+      <div class="error-msg" id="error">⚠ Preencha todos os campos obrigatórios.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Results -->
+    <div class="results-section" id="results">
+
+      <div class="results-header">
+        <div class="results-title">📅 Horários de saída</div>
+        <div class="interval-pill" id="intervalo_pill">intervalo: <span id="intervalo_val">—</span></div>
+      </div>
+
+      <div class="aviso-intervalo" id="aviso-intervalo">
+        <div class="aviso-intervalo-icon">⚠️</div>
+        <div>
+          <div class="aviso-intervalo-title">Intervalo abaixo do mínimo legal</div>
+          <div class="aviso-intervalo-detail" id="aviso-intervalo-detail">Intervalo inferior a 60 minutos</div>
+        </div>
+      </div>
+
+      <div class="result-grid">
+        <div class="result-card cyan" id="row-750">
+          <div class="result-card-label">Jornada 7h30</div>
+          <div class="result-card-time" id="saida_750">--:--</div>
+          <div class="result-card-sub">saída normal</div>
+        </div>
+        <div class="result-card green" id="row-extra750">
+          <div class="result-card-label">+2h extras</div>
+          <div class="result-card-time" id="saida_extra750">--:--</div>
+          <div class="result-card-sub">sobre 7h30</div>
+        </div>
+        <div class="result-card violet" id="row-8">
+          <div class="result-card-label">Jornada 8h00</div>
+          <div class="result-card-time" id="saida_8">--:--</div>
+          <div class="result-card-sub">saída normal</div>
+        </div>
+        <div class="result-card amber" id="row-extra8">
+          <div class="result-card-label">+2h extras</div>
+          <div class="result-card-time" id="saida_extra">--:--</div>
+          <div class="result-card-sub">sobre 8h00</div>
+        </div>
+      </div>
+
+      <div class="divider extras-divider"></div>
+
+      <div class="extras-label-row">⏰ Simulação — saída real</div>
+
+      <div class="saida-field">
+        <div class="field" style="margin-bottom:0;">
+          <label><span class="field-icon">🏁</span>Saída do Expediente</label>
+          <input type="time" id="saida_expediente" oninput="calcularExtras()" />
+        </div>
+      </div>
+
+      <div class="extras-box" id="extras-box">
+        <div class="extras-box-icon" id="extras-icon">🔥</div>
+        <div class="extras-box-lbl" id="extras-lbl">Horas extras realizadas</div>
+        <div class="extras-box-val" id="extras-val">0h00</div>
+        <div class="extras-box-note" id="extras-note"></div>
+      </div>
+
+      <div class="alerta" id="alerta-excesso">
+        <div class="alerta-icon">🚨</div>
+        <div class="alerta-text">Limite de 2h extras ultrapassado</div>
+        <div class="alerta-detail" id="alerta-detail"></div>
+      </div>
+    </div>
+
+    <div class="footer">by: b.rosas</div>
+  </div>
+</div>
+
+<script>
+  let jornadaSelecionada = '750';
+  let darkMode = true;
+
+  function toggleTheme() {
+    darkMode = !darkMode;
+    document.body.classList.toggle('light', !darkMode);
+    document.getElementById('theme-btn').textContent = darkMode ? '☀️' : '🌙';
+  }
+
+  function selecionarJornada(tipo) {
+    jornadaSelecionada = tipo;
+    const b750 = document.getElementById('opt-750');
+    const b8 = document.getElementById('opt-8');
+    b750.className = 'toggle-btn' + (tipo === '750' ? ' active-cyan' : '');
+    b8.className = 'toggle-btn' + (tipo === '8' ? ' active-violet' : '');
+    const e = document.getElementById('entrada').value;
+    const si = document.getElementById('saida_intervalo').value;
+    const vi = document.getElementById('volta_intervalo').value;
+    if (e && si && vi) calcular();
+  }
+
+  function toMinutes(val) {
+    const [h, m] = val.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function toHHMM(minutes) {
+    const d = ((minutes % 1440) + 1440) % 1440;
+    return `${String(Math.floor(d / 60)).padStart(2,'0')}:${String(d % 60).padStart(2,'0')}`;
+  }
+
+  function diffMin(a, b) {
+    let d = b - a;
+    if (d < 0) d += 1440;
+    return d;
+  }
+
+  function formatDur(min) {
+    const h = Math.floor(min / 60), m = min % 60;
+    if (h === 0) return `${m}min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h${String(m).padStart(2,'0')}`;
+  }
+
+  function calcular() {
+    const e = document.getElementById('entrada').value;
+    const si = document.getElementById('saida_intervalo').value;
+    const vi = document.getElementById('volta_intervalo').value;
+    const err = document.getElementById('error');
+    const res = document.getElementById('results');
+
+    if (!e || !si || !vi) {
+      err.style.display = 'block';
+      res.style.display = 'none';
+      return;
+    }
+    err.style.display = 'none';
+
+    const entMin = toMinutes(e);
+    const siMin = toMinutes(si);
+    const viMin = toMinutes(vi);
+    const periodo1 = diffMin(entMin, siMin);
+    const intervalo = diffMin(siMin, viMin);
+
+    if (intervalo <= 0) {
+      err.textContent = '⚠ A volta do intervalo deve ser após a saída.';
+      err.style.display = 'block';
+      res.style.display = 'none';
+      return;
+    }
+
+    const r750 = (7*60+30) - periodo1;
+    const r8   = (8*60)    - periodo1;
+
+    document.getElementById('saida_750').textContent      = toHHMM(viMin + r750);
+    document.getElementById('saida_8').textContent        = toHHMM(viMin + r8);
+    document.getElementById('saida_extra750').textContent = toHHMM(viMin + r750 + 120);
+    document.getElementById('saida_extra').textContent    = toHHMM(viMin + r8 + 120);
+
+    const is750 = jornadaSelecionada === '750';
+    document.getElementById('row-750').style.display      = is750 ? '' : 'none';
+    document.getElementById('row-extra750').style.display = is750 ? '' : 'none';
+    document.getElementById('row-8').style.display        = is750 ? 'none' : '';
+    document.getElementById('row-extra8').style.display   = is750 ? 'none' : '';
+
+    const intH = Math.floor(intervalo/60), intM = intervalo%60;
+    document.getElementById('intervalo_val').textContent =
+      intH > 0 ? `${intH}h${intM > 0 ? String(intM).padStart(2,'0')+'min' : ''}` : `${intM}min`;
+
+    // Aviso intervalo curto
+    const pill = document.getElementById('intervalo_pill');
+    const aviso = document.getElementById('aviso-intervalo');
+    if (intervalo < 60) {
+      pill.classList.add('curto');
+      document.getElementById('aviso-intervalo-detail').textContent =
+        `Seu intervalo foi de ${formatDur(intervalo)} — o mínimo recomendado é 1h`;
+      aviso.style.display = 'flex';
+    } else {
+      pill.classList.remove('curto');
+      aviso.style.display = 'none';
+    }
+
+    res.style.display = 'block';
+
+    if (document.getElementById('saida_expediente').value) calcularExtras();
+  }
+
+  function calcularExtras() {
+    const se = document.getElementById('saida_expediente').value;
+    const box = document.getElementById('extras-box');
+    const alerta = document.getElementById('alerta-excesso');
+
+    const e  = document.getElementById('entrada').value;
+    const si = document.getElementById('saida_intervalo').value;
+    const vi = document.getElementById('volta_intervalo').value;
+
+    if (!se || !e || !si || !vi) {
+      box.style.display = 'none';
+      alerta.style.display = 'none';
+      return;
+    }
+
+    const entMin    = toMinutes(e);
+    const siMin     = toMinutes(si);
+    const viMin     = toMinutes(vi);
+    const saidaMin  = toMinutes(se);
+
+    const p1 = diffMin(entMin, siMin);
+    const p2 = diffMin(viMin, saidaMin);
+    const total = p1 + p2;
+
+    const jornadaMin = jornadaSelecionada === '750' ? 7*60+30 : 8*60;
+    const extras = total - jornadaMin;
+
+    box.style.display = 'block';
+
+    if (extras > 0) {
+      document.getElementById('extras-icon').textContent = '🔥';
+      document.getElementById('extras-lbl').textContent  = 'Horas extras realizadas';
+      document.getElementById('extras-val').textContent  = formatDur(extras);
+
+      if (extras > 120) {
+        box.className = 'extras-box has-extras';
+        document.getElementById('extras-note').textContent = '';
+        document.getElementById('alerta-detail').textContent =
+          `Excedente de ${formatDur(extras - 120)} acima do limite`;
+        alerta.style.display = 'block';
+      } else {
+        box.className = 'extras-box has-extras';
+        document.getElementById('extras-note').textContent =
+          `Ainda restam ${formatDur(120 - extras)} do limite de 2h`;
+        alerta.style.display = 'none';
+      }
+    } else if (extras === 0) {
+      document.getElementById('extras-icon').textContent = '✅';
+      document.getElementById('extras-lbl').textContent  = 'Horas extras realizadas';
+      document.getElementById('extras-val').textContent  = 'Nenhuma';
+      document.getElementById('extras-note').textContent = 'Saiu exatamente no horário!';
+      box.className = 'extras-box normal';
+      alerta.style.display = 'none';
+    } else {
+      document.getElementById('extras-icon').textContent = '⏳';
+      document.getElementById('extras-lbl').textContent  = 'Débito de horas';
+      document.getElementById('extras-val').textContent  = formatDur(Math.abs(extras));
+      document.getElementById('extras-note').textContent = 'Saiu antes do horário normal';
+      box.className = 'extras-box negativo';
+      alerta.style.display = 'none';
+    }
+  }
+
+  function limpar() {
+    ['entrada','saida_intervalo','volta_intervalo','saida_expediente']
+      .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('error').style.display = 'none';
+    document.getElementById('extras-box').style.display = 'none';
+    document.getElementById('alerta-excesso').style.display = 'none';
+    document.getElementById('aviso-intervalo').style.display = 'none';
+    document.getElementById('intervalo_pill').classList.remove('curto');
+  }
+
+  document.getElementById('volta_intervalo').addEventListener('change', () => {
+    const e  = document.getElementById('entrada').value;
+    const si = document.getElementById('saida_intervalo').value;
+    const vi = document.getElementById('volta_intervalo').value;
+    if (e && si && vi) calcular();
+  });
+</script>
+</body>
+</html>
